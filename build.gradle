@@ -1,0 +1,18 @@
+plugins {
+    id 'java-library'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testImplementation(
+            "org.junit.jupiter:junit-jupiter:5.9.0",
+            "io.rest-assured:rest-assured:5.3.0"
+    )
+}
+
+test {
+    useJUnitPlatform()
+}
