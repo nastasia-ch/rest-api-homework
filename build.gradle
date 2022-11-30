@@ -1,15 +1,35 @@
 plugins {
     id 'java-library'
+    id "io.freefair.lombok" version "6.5.1"
+    id 'io.qameta.allure' version '2.11.2'
 }
 
 repositories {
     mavenCentral()
 }
 
+allure {
+    report {
+        version.set("2.20.1")
+    }
+    adapter {
+        aspectjWeaver.set(true)
+        frameworks {
+            junit5 {
+                adapterVersion.set("2.20.1")
+            }
+        }
+    }
+}
+
 dependencies {
     testImplementation(
             "org.junit.jupiter:junit-jupiter:5.9.0",
-            "io.rest-assured:rest-assured:5.3.0"
+            "io.rest-assured:rest-assured:5.3.0",
+            "org.assertj:assertj-core:3.23.1",
+            "com.fasterxml.jackson.core:jackson-databind:2.14.1",
+            "io.qameta.allure:allure-rest-assured:2.20.1"
+
     )
 }
 
