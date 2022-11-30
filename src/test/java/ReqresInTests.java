@@ -1,4 +1,6 @@
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 import static io.restassured.RestAssured.*;
 import static io.restassured.http.ContentType.JSON;
@@ -6,77 +8,112 @@ import static org.hamcrest.Matchers.*;
 
 public class ReqresInTests {
 
-    /*
-    1. Сделать запрос на https://reqres.in/api/login
-    с телом { "email": "eve.holt@reqres.in", "password": "cityslicka" }
-    2. Получить ответ { "token": "QpwL5tke4Pnpja7X4" }
-    3. Проверить token is QpwL5tke4Pnpja7X4
-    */
+    @CsvSource(value = {
+            "0,7,michael.lawson@reqres.in,Michael,Lawson,https://reqres.in/img/faces/7-image.jpg",
+            "4,11,george.edwards@reqres.in,George,Edwards,https://reqres.in/img/faces/11-image.jpg"
+    })
+    @ParameterizedTest
+    void checkUserDataTestOnPage(int userIndexOnPage,
+                                 int userId,
+                                 String email,
+                                 String firstName,
+                                 String lastName,
+                                 String avatarLink) {
 
-    @Test
-    void loginTest() {
-
-        String data = "{ \"email\": \"eve.holt@reqres.in\", \"password\": \"cityslicka\" }";
         given()
                 .log().uri()
-                .contentType(JSON) // обязательно нужно указать тип передаваемых данных
-                .body(data)
+                .when()
+                .get("https://reqres.in/api/users?page=2")
+                .then()
+                .log().status()
+                .log().body()
+                .statusCode(200)
+                .body("data["+userIndexOnPage+"]", hasEntry("id",userId))
+                .body("data["+userIndexOnPage+"]", hasEntry("email",email))
+                .body("data["+userIndexOnPage+"]", hasEntry("first_name",firstName))
+                .body("data["+userIndexOnPage+"]", hasEntry("last_name",lastName))
+                .body("data["+userIndexOnPage+"]", hasEntry("avatar",avatarLink));
+    }
+
+    @Test
+    void checkUserIdOnPage() {
+
+        given()
+                .log().uri()
         .when()
-                .post("https://reqres.in/api/login")
+                .get("https://reqres.in/api/users?page=2")
         .then()
                 .log().status()
                 .log().body()
                 .statusCode(200)
-                .body("token", is("QpwL5tke4Pnpja7X4"));
+                .body("data.id",hasItems(7,8,9,10,11,12))
+                .assertThat();
+    }
+
+    @Test
+    void unExistedUrlTest() {
+
+        given()
+                .log().uri()
+                .when()
+                .get("https://reqres.in/api/users/unexistedpage")
+                .then()
+                .log().status()
+                .log().body()
+                .statusCode(404);
+    }
+
+    @Test
+    void createNewUserTest() {
+
+        String newUserData = "{\"name\": \"new_user_name\",\n\"job\": \"qa_engineer\"}";
+
+        given()
+                .log().uri()
+                .contentType(JSON)
+                .body(newUserData)
+        .when()
+                .post("https://reqres.in/api/users")
+        .then()
+                .log().status()
+                .log().body()
+                .statusCode(201)
+                .body("name", is("new_user_name"))
+                .body("job", is("qa_engineer"));
 
     }
 
     @Test
-    void unSupportedMediaTypeTest() {
+    void updateUserDataTest() {
+
+        String updatedUserData = "{\"name\": \"updated_user_name\",\n\"job\": \"qa_auto_engineer\"}";
 
         given()
                 .log().uri()
+                .contentType(JSON)
+                .body(updatedUserData)
         .when()
-                .post("https://reqres.in/api/login")
+                .patch("https://reqres.in/api/users/2")
         .then()
                 .log().status()
                 .log().body()
-                .statusCode(415);
+                .statusCode(200)
+                .body("name", is("updated_user_name"))
+                .body("job", is("qa_auto_engineer"));
 
     }
 
     @Test
-    void missingEmailOrPasswordTest() {
+    void deletePageTest() {
 
         given()
                 .log().uri()
-                .body("123")
         .when()
-                .post("https://reqres.in/api/login")
+                .delete("https://reqres.in/api/users/2")
         .then()
                 .log().status()
                 .log().body()
-                .statusCode(400)
-                .body("error", is("Missing email or username"));
-
-    }
-
-    @Test
-    void missingPasswordTest() {
-
-        String data = "{ \"email\": \"eve.holt@reqres.in\"}";
-        given()
-                .log().uri()
-                .contentType(JSON) // обязательно нужно указать тип передаваемых данных
-                .body(data)
-        .when()
-                .post("https://reqres.in/api/login")
-        .then()
-                .log().status()
-                .log().body()
-                .statusCode(400)
-                .body("error", is("Missing password"));
-
+                .statusCode(204);
     }
 
 }

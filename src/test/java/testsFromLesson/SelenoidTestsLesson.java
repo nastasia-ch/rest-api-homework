@@ -1,14 +1,13 @@
-package testsFromLessin;
+package testsFromLesson;
 
 import io.restassured.response.Response;
 import org.junit.jupiter.api.Test;
 
 import static io.restassured.RestAssured.*;
-import static io.restassured.matcher.RestAssuredMatchers.*;
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class SelenoidTests {
+public class SelenoidTestsLesson {
 
     /*
     1. Сделать запрос на https://selenoid.autotests.cloud/status
