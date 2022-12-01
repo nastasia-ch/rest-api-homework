@@ -40,3 +40,4 @@ target/
 .vscode
 /gradlew
 /gradlew.bat
+/src/test/java/testsFromLesson/

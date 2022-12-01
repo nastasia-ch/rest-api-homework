@@ -1,105 +1,141 @@
+import com.github.javafaker.Faker;
+import io.qameta.allure.restassured.AllureRestAssured;
+import models.*;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
+import java.util.Locale;
+
+import static helpers.CustomApiListener.withCustomTemplates;
+import static helpers.HelpMethods.getIdOfFirstUserOnPage;
 import static io.restassured.RestAssured.*;
-import static io.restassured.http.ContentType.JSON;
-import static org.hamcrest.Matchers.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static specs.UsersSpec.*;
 
 public class ReqresInTests {
 
     @CsvSource(value = {
-            "0,7,michael.lawson@reqres.in,Michael,Lawson,https://reqres.in/img/faces/7-image.jpg",
-            "4,11,george.edwards@reqres.in,George,Edwards,https://reqres.in/img/faces/11-image.jpg"
+            "1,2,3,emma.wong@reqres.in,Emma,Wong,https://reqres.in/img/faces/3-image.jpg",
+            "2,0,7,michael.lawson@reqres.in,Michael,Lawson,https://reqres.in/img/faces/7-image.jpg"
     })
     @ParameterizedTest
-    void checkUserDataTestOnPage(int userIndexOnPage,
+    void checkUserDataTestOnPage(int pageNumber,
+                                 int userIndexOnPage,
                                  int userId,
                                  String email,
                                  String firstName,
                                  String lastName,
                                  String avatarLink) {
 
-        given()
-                .log().uri()
+        ListUsersResponseModel response =
+                given()
+                .filter(new AllureRestAssured())
+                .spec(usersRequestSpec)
+                .queryParam("page", pageNumber)
                 .when()
-                .get("https://reqres.in/api/users?page=2")
+                .get()
                 .then()
-                .log().status()
-                .log().body()
-                .statusCode(200)
-                .body("data["+userIndexOnPage+"]", hasEntry("id",userId))
-                .body("data["+userIndexOnPage+"]", hasEntry("email",email))
-                .body("data["+userIndexOnPage+"]", hasEntry("first_name",firstName))
-                .body("data["+userIndexOnPage+"]", hasEntry("last_name",lastName))
-                .body("data["+userIndexOnPage+"]", hasEntry("avatar",avatarLink));
+                .spec(listUsersResponseSpec)
+                .extract().as(ListUsersResponseModel.class);
+
+        assertThat(response.getData().get(userIndexOnPage).getId()).isEqualTo(userId);
+        assertThat(response.getData().get(userIndexOnPage).getEmail()).isEqualTo(email);
+        assertThat(response.getData().get(userIndexOnPage).getFirst_name()).isEqualTo(firstName);
+        assertThat(response.getData().get(userIndexOnPage).getLast_name()).isEqualTo(lastName);
+        assertThat(response.getData().get(userIndexOnPage).getAvatar()).isEqualTo(avatarLink);
     }
 
-    @Test
-    void checkUserIdOnPage() {
 
-        given()
-                .log().uri()
-        .when()
-                .get("https://reqres.in/api/users?page=2")
-        .then()
-                .log().status()
-                .log().body()
-                .statusCode(200)
-                .body("data.id",hasItems(7,8,9,10,11,12))
-                .assertThat();
+    @CsvSource(value = {
+            "1",
+            "2"
+    })
+    @ParameterizedTest
+    void checkUsersIdOnPage(int pageNumber) {
+
+        ListUsersResponseModel response =
+                 given()
+                .filter(new AllureRestAssured())
+                .spec(usersRequestSpec)
+                .queryParam("page", pageNumber)
+                .when()
+                .get()
+                .then()
+                .spec(listUsersResponseSpec)
+                .extract().as(ListUsersResponseModel.class);
+
+        for(int i=0; i<response.getData().size(); i++) {
+            assertThat(response.getData().get(i).getId()).
+                    isEqualTo(getIdOfFirstUserOnPage(pageNumber)+i);
+        }
+
     }
 
     @Test
     void unExistedUrlTest() {
 
         given()
-                .log().uri()
+                .filter(new AllureRestAssured())
+                .spec(usersRequestSpec)
                 .when()
-                .get("https://reqres.in/api/users/unexistedpage")
+                .get("/unexistedpage")
                 .then()
-                .log().status()
-                .log().body()
+                .log().all()
                 .statusCode(404);
     }
 
     @Test
     void createNewUserTest() {
 
-        String newUserData = "{\"name\": \"new_user_name\",\n\"job\": \"qa_engineer\"}";
+        Faker faker = new Faker(new Locale("en"));
+        String firstName = faker.name().firstName();
+        String jobPosition = faker.job().position();
 
-        given()
-                .log().uri()
-                .contentType(JSON)
-                .body(newUserData)
-        .when()
-                .post("https://reqres.in/api/users")
-        .then()
-                .log().status()
-                .log().body()
-                .statusCode(201)
-                .body("name", is("new_user_name"))
-                .body("job", is("qa_engineer"));
+        NewUserRequestModel request = new NewUserRequestModel();
+        request.setName(firstName);
+        request.setJob(jobPosition);
+
+        NewUserResponseModel response =
+                 given()
+                .filter(withCustomTemplates())
+                .spec(usersRequestSpec)
+                .body(request)
+                .when()
+                .post()
+                .then()
+                .spec(createdUserResponseSpec)
+                .extract().as(NewUserResponseModel.class);
+
+        assertThat(response.getName()).isEqualTo(firstName);
+        assertThat(response.getJob()).isEqualTo(jobPosition);
 
     }
 
     @Test
     void updateUserDataTest() {
 
-        String updatedUserData = "{\"name\": \"updated_user_name\",\n\"job\": \"qa_auto_engineer\"}";
+        Faker faker = new Faker(new Locale("en"));
+        String firstName = faker.name().firstName();
+        String jobPosition = faker.job().position();
 
-        given()
-                .log().uri()
-                .contentType(JSON)
-                .body(updatedUserData)
-        .when()
-                .patch("https://reqres.in/api/users/2")
-        .then()
-                .log().status()
-                .log().body()
-                .statusCode(200)
-                .body("name", is("updated_user_name"))
-                .body("job", is("qa_auto_engineer"));
+        UpdateUserRequestModel request = new UpdateUserRequestModel();
+        request.setName(firstName);
+        request.setJob(jobPosition);
+
+        UpdateUserResponseModel response =
+                 given()
+                .filter(withCustomTemplates())
+                .spec(usersRequestSpec)
+                .body(request)
+                .when()
+                .patch("/2")
+                .then()
+                .spec(updatedUserResponseSpec)
+                .extract().as(UpdateUserResponseModel.class);
+
+        assertThat(response.getName()).isEqualTo(firstName);
+        assertThat(response.getJob()).isEqualTo(jobPosition);
 
     }
 
@@ -107,12 +143,12 @@ public class ReqresInTests {
     void deletePageTest() {
 
         given()
-                .log().uri()
-        .when()
-                .delete("https://reqres.in/api/users/2")
-        .then()
-                .log().status()
-                .log().body()
+                .filter(withCustomTemplates())
+                .spec(usersRequestSpec)
+                .when()
+                .delete("/2")
+                .then()
+                .log().all()
                 .statusCode(204);
     }
 
