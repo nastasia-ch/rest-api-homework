@@ -3,7 +3,6 @@ import io.qameta.allure.*;
 import io.qameta.allure.restassured.AllureRestAssured;
 import models.*;
 import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -12,8 +11,9 @@ import java.util.Locale;
 
 import static helpers.CustomApiListener.withCustomTemplates;
 import static helpers.HelpMethods.getIdOfFirstUserOnPage;
-import static io.restassured.RestAssured.*;
+import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.hasItem;
 import static specs.UsersSpec.*;
 
 public class ReqresInTests {
@@ -226,3 +226,5 @@ public class ReqresInTests {
     }
 
 }
+
+
