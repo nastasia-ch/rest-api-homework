@@ -1,6 +1,9 @@
 import com.github.javafaker.Faker;
+import io.qameta.allure.*;
 import io.qameta.allure.restassured.AllureRestAssured;
 import models.*;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -19,6 +22,13 @@ public class ReqresInTests {
             "1,2,3,emma.wong@reqres.in,Emma,Wong,https://reqres.in/img/faces/3-image.jpg",
             "2,0,7,michael.lawson@reqres.in,Michael,Lawson,https://reqres.in/img/faces/7-image.jpg"
     })
+    @Epic("reqres.in")
+    @Feature("Работа с данными пользователей")
+    @Story("Просмотр данных на странице")
+    @Owner("Anastasia Chernega")
+    @Severity(SeverityLevel.BLOCKER)
+    @Link(value="Link on reqres.in (testing resource)",url="https://reqres.in")
+    @DisplayName("Тест: все данные пользователя верно отображены на странице")
     @ParameterizedTest
     void checkUserDataTestOnPage(int pageNumber,
                                  int userIndexOnPage,
@@ -46,33 +56,75 @@ public class ReqresInTests {
         assertThat(response.getData().get(userIndexOnPage).getAvatar()).isEqualTo(avatarLink);
     }
 
-
     @CsvSource(value = {
             "1",
             "2"
     })
+    @Epic("reqres.in")
+    @Feature("Работа с данными пользователей")
+    @Story("Просмотр данных на странице")
+    @Owner("Anastasia Chernega")
+    @Severity(SeverityLevel.BLOCKER)
+    @Link(value="Link on reqres.in (testing resource)",url="https://reqres.in")
+    @DisplayName("Тест: все пользователи с нужными id отображены на странице")
     @ParameterizedTest
-    void checkUsersIdOnPage(int pageNumber) {
+    void checkUsersIdOnPagePositiveTest(int pageNumber) {
 
         ListUsersResponseModel response =
-                 given()
-                .filter(new AllureRestAssured())
-                .spec(usersRequestSpec)
-                .queryParam("page", pageNumber)
-                .when()
-                .get()
-                .then()
-                .spec(listUsersResponseSpec)
-                .extract().as(ListUsersResponseModel.class);
+                given()
+                        .filter(new AllureRestAssured())
+                        .spec(usersRequestSpec)
+                        .queryParam("page", pageNumber)
+                        .when()
+                        .get()
+                        .then()
+                        .spec(listUsersResponseSpec)
+                        .extract().as(ListUsersResponseModel.class);
 
-        for(int i=0; i<response.getData().size(); i++) {
+        for (int i = 0; i < response.getData().size(); i++) {
             assertThat(response.getData().get(i).getId()).
-                    isEqualTo(getIdOfFirstUserOnPage(pageNumber)+i);
+                    isEqualTo(getIdOfFirstUserOnPage(pageNumber) + i);
         }
-
     }
 
-    @Test
+        @CsvSource(value = {
+               "1,8",
+               "2,3"
+        })
+        @Epic("reqres.in")
+        @Feature("Работа с данными пользователей")
+        @Story("Просмотр данных на странице")
+        @Owner("Anastasia Chernega")
+        @Severity(SeverityLevel.BLOCKER)
+        @Link(value="Link on reqres.in (testing resource)",url="https://reqres.in")
+        @DisplayName("Тест: на странице не отображен пользователь с id с другой страницы")
+        @ParameterizedTest
+        void checkUserIdOnPageNegativeTest(int pageNumber, int userId) {
+
+            ListUsersResponseModel response =
+                    given()
+                        .filter(new AllureRestAssured())
+                        .spec(usersRequestSpec)
+                        .queryParam("page", pageNumber)
+                        .when()
+                        .get()
+                        .then()
+                        .spec(listUsersResponseSpec)
+                        .extract().as(ListUsersResponseModel.class);
+
+            for (int i = 0; i < response.getData().size(); i++) {
+                assertThat(response.getData().get(i).getId()).
+                      isNotEqualTo(userId);
+            }
+        }
+
+    @Epic("reqres.in")
+    @Feature("Работа с данными пользователей")
+    @Story("Переход на несуществующую страницу")
+    @Owner("Anastasia Chernega")
+    @Severity(SeverityLevel.BLOCKER)
+    @Link(value="Link on reqres.in (testing resource)",url="https://reqres.in")
+    @DisplayName("Тест: при переходе на несуществующую страницу код ответа 404")
     void unExistedUrlTest() {
 
         given()
@@ -85,6 +137,13 @@ public class ReqresInTests {
                 .statusCode(404);
     }
 
+    @Epic("reqres.in")
+    @Feature("Работа с данными пользователей")
+    @Story("Создание нового пользователя")
+    @Owner("Anastasia Chernega")
+    @Severity(SeverityLevel.BLOCKER)
+    @Link(value="Link on reqres.in (testing resource)",url="https://reqres.in")
+    @DisplayName("Тест: создание нового пользователя")
     @Test
     void createNewUserTest() {
 
@@ -112,6 +171,13 @@ public class ReqresInTests {
 
     }
 
+    @Epic("reqres.in")
+    @Feature("Работа с данными пользователей")
+    @Story("Редактирование данных пользователя")
+    @Owner("Anastasia Chernega")
+    @Severity(SeverityLevel.BLOCKER)
+    @Link(value="Link on reqres.in (testing resource)",url="https://reqres.in")
+    @DisplayName("Тест: обновление данных о пользователе")
     @Test
     void updateUserDataTest() {
 
@@ -139,6 +205,13 @@ public class ReqresInTests {
 
     }
 
+    @Epic("reqres.in")
+    @Feature("Работа с данными пользователей")
+    @Story("Удаление данных пользователя")
+    @Owner("Anastasia Chernega")
+    @Severity(SeverityLevel.BLOCKER)
+    @Link(value="Link on reqres.in (testing resource)",url="https://reqres.in")
+    @DisplayName("Тест: удаление данных о пользователе")
     @Test
     void deletePageTest() {
 
